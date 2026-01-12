@@ -1,0 +1,105 @@
+PIPEX - How it works (dumbcode explanation)
+
+Shell command we want to replicate:
+< infile cmd1 | cmd2 > outfile
+
+Example:
+< input.txt grep "hello" | wc -l > output.txt
+
+Step by step explanation:
+
+1. File Descriptors (FD):
+   stdin  (FD 0) -> for reading input
+   stdout (FD 1) -> for writing output
+   stderr (FD 2) -> for error messages
+
+2. What happens in shell:
+   a) < input.txt     : redirects input.txt to stdin
+   b) grep "hello"    : reads from stdin, writes to pipe
+   c) |               : creates a pipe between commands
+   d) wc -l           : reads from pipe, writes to stdout
+   e) > output.txt    : redirects stdout to output.txt
+
+3. How Pipex implements this:
+
+   [infile] -> [cmd1] -> [pipe] -> [cmd2] -> [outfile]
+      FD        pid1       |        pid2       FD
+                        [0|1]
+
+   Code flow:
+   a) Open files:
+      infile  = open("input.txt", O_RDONLY)
+      outfile = open("output.txt", O_WRONLY | O_CREAT)
+
+   b) Create pipe:
+      pipe(pipe_fd)
+      pipe_fd[0] = read end
+      pipe_fd[1] = write end
+
+   c) First child (cmd1):
+      fork() -> pid1
+      if (pid1 == 0)
+      {
+         dup2(infile, STDIN_FILENO)     // redirect stdin to infile
+         dup2(pipe[1], STDOUT_FILENO)   // redirect stdout to pipe write end
+         close unused FDs
+         execve(cmd1)                   // execute grep
+      }
+
+   d) Second child (cmd2):
+      fork() -> pid2
+      if (pid2 == 0)
+      {
+         dup2(pipe[0], STDIN_FILENO)    // redirect stdin to pipe read end
+         dup2(outfile, STDOUT_FILENO)   // redirect stdout to outfile
+         close unused FDs
+         execve(cmd2)                   // execute wc
+      }
+
+   e) Parent:
+      close all FDs
+      wait for both children
+
+4. Important functions:
+   - fork()   : creates new process
+   - pipe()   : creates a pipe
+   - dup2()   : redirects file descriptors
+   - execve() : executes a program
+   - wait()   : waits for child process
+   - close()  : closes file descriptor
+
+5. Common errors to handle:
+   - File permissions
+   - Command not found
+   - Memory allocation fails
+   - Fork fails
+   - Pipe creation fails
+
+6. Example with file descriptors:
+
+   Initial state:
+   stdin(0) -> keyboard
+   stdout(1) -> screen
+   stderr(2) -> screen
+
+   After redirections (first child):
+   stdin(0) -> infile
+   stdout(1) -> pipe[1]
+   stderr(2) -> screen
+
+   After redirections (second child):
+   stdin(0) -> pipe[0]
+   stdout(1) -> outfile
+   stderr(2) -> screen
+
+7. Memory management:
+   - Free all allocated memory (command paths, arguments)
+   - Close all file descriptors
+   - Wait for child processes to avoid zombies
+
+Remember:
+- Always check return values
+- Close unused file descriptors
+- Free allocated memory
+- Handle errors properly
+- Wait for child processes
