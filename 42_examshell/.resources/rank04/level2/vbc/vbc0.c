@@ -65,7 +65,7 @@ int expect(char **s, char c)
     return (0);
 }
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//...///////////////////////////////////////////////////////////////////////
 
 int      check_balance(char *s);
 node    *parse_number_or_group(char **s);
@@ -104,6 +104,32 @@ node    *parse_number_or_group(char **s)
     return (NULL);
 }
 
+node    *parse_multiplication(char **s)
+{
+    node    *left;
+    node    *right;
+    node    tmp;
+
+    left = parse_number_or_group(s);
+    if (!left)
+        return (NULL);
+    while (**s == '*')
+    {
+        (*s)++;
+        right = parse_number_or_group(s);
+        if (!right)
+        {
+            destroy_tree(left);
+            return (NULL);
+        }
+        tmp.type = MULTI;
+        tmp.l = left;
+        tmp.r = right;
+        left = new_node(tmp);
+    }
+    return (left);
+}
+
 node    *parse_addition(char **s)
 {
     node    *left;
@@ -130,32 +156,6 @@ node    *parse_addition(char **s)
     return (left);
 }
 
-
-node    *parse_multiplication(char **s)
-{
-    node    *left;
-    node    *right;
-    node    tmp;
-
-    left = parse_number_or_group(s);
-    if (!left)
-        return (NULL);
-    while (**s == '*')
-    {
-        (*s)++;
-        right = parse_number_or_group(s);
-        if (!right)
-        {
-            destroy_tree(left);
-            return (NULL);
-        }
-        tmp.type = MULTI;
-        tmp.l = left;
-        tmp.r = right;
-        left = new_node(tmp);
-    }
-    return (left);
-}
 
 
 int check_balance(char *s)

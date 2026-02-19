@@ -27,24 +27,24 @@ int    picoshell(char **cmds[])
             }
             return 1; // return with error
         }
+
         if(pid == 0)  //inside child process
         {
             if(last_fd != -1)    //if not the first command, set up input from previous pipe
             {
-                if(dup2(last_fd, STDIN_FILENO) == -1)  //dup2 fails
-                    exit(1);   //exit child with error
+                dup2(last_fd, STDIN_FILENO);  //dup2 fails
                 close(last_fd);    //close the read end after duplicating
             }
             if(cmds[i + 1])   //if not the last command, set up output to the current pipe
             {
                 close(fd[0]);   //close the read end of the current pipe
-                if(dup2(fd[1], STDOUT_FILENO) == -1)  //dup2 fails
-                    exit(1); //exit child with error
+                dup2(fd[1], STDOUT_FILENO); //dup2 fails
                 close(fd[1]); //close the write end after duplicating
             }
             execvp(cmds[i][0], cmds[i]);  //execute the command
             exit(1); //if execvp fails, exit child with error
         }
+
         if(last_fd != -1)   //if not the first command, close the previous pipe's read end 
             close(last_fd);  // it's no longer needed in the parent
         if(cmds[i + 1])  // if there is a next command
@@ -52,6 +52,7 @@ int    picoshell(char **cmds[])
             close(fd[1]); // close the write end of the current pipe in the parent
             last_fd = fd[0];  // save the read end for the next command
         }
+
         i++;
     }
     // int last_status= 0;

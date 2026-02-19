@@ -1,56 +1,49 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+// Assignment name  : ft_popen
+// Expected files   : ft_popen.c
+// Allowed functions: pipe, fork, dup2, execvp, close, exit
+// --------------------------------------------------------------------------------------
 
-/* Allowed functions: pipe, fork, dup2, execvp, close, exit
+// Write the following function:
 
-write the following function:
+// int ft_popen(const char *file, char *const argv[], char type);
 
-    int    ft_popen(const char file, charconst argv[], char type)
+// The function must launch the executable file with the arguments argv (using execvp).
+// If type is 'r' the function must return a file descriptor connected to the output of the command.
+// If type is 'w' the function must return a file descriptor connected to the input of the command.
+// In case of error or invalid parameter the function must return -1.
 
-The function must launch the executable file with the arguments argv (using execvp).
-If the type is 'r' the function must return a file descriptor connected to the output of the command.
-If the type is 'w' the function must return a file descriptor connected to the input of the command.
-In case of error or invalid parameter the function must return -1.*/
+// For example, the function could be used like that:
 
-int ft_popen(const char *file,  char *const argv[], char type)
-{
-    int pipefd[2];
-    if (!file || !argv || (type != 'r' && type != 'w'))
-        return (1);
-    pipe(pipefd);
-    if (!pipefd[0] || !pipefd[1])
-        return (-1);
-    int ret = fork();
-    if (ret == -1)
-    {
-        close (pipefd[1]);
-        close (pipefd[0]);
-        return (-1);
-    }
-    if (ret == 0)//enfant
-    {
-        if (type == 'r')
-            dup2(pipefd[1], STDOUT_FILENO);
-        if (type == 'w')
-            dup2(pipefd[0], STDIN_FILENO);
-        execvp(file, (char * const *)argv);
-    }
-    else//parent
-    {
-        if (type == 'r')
-            return (pipefd[1]);
-        if (type == 'w')
-            return (pipefd[0]);
-    }
-    return (-1);
-}
+// int main()
+// {
+//     int  fd;
+//     char *line;
 
+//     fd = ft_popen("ls", (char *const []){"ls", NULL}, 'r');
+//     while ((line = get_next_line(fd)))
+//         ft_putstr(line);
+//     return (0);
+// }
+
+
+// int	main() {
+// 	int	fd = ft_popen("ls", (char *const []){"ls", NULL}, 'r');
+// 	dup2(fd, 0);
+// 	fd = ft_popen("grep", (char *const []){"grep", "c", NULL}, 'r');
+// 	char	*line;
+// 	while ((line = get_next_line(fd)))
+// 		printf("%s", line);
+// }
+
+
+// Hints:
+// Do not leak file descriptors!
+// This exercise is inspired by the libc's popen()
 
 int main(void)
 {
-    //r sortie
-    //w entre
+    //r sortie // 1
+    //w entre // 0
     printf("mine:\n");
     ft_popen("ls", (char *const[]){"ls", "-l", NULL}, 'w');
 
